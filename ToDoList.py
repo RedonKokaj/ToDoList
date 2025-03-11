@@ -42,7 +42,7 @@ def viewTask():
         print(f"{index}. {task}")
 
 
-if __name__ == "__main__":
+def main():
     loadTasks()
     try:
         while True:
@@ -66,3 +66,7 @@ if __name__ == "__main__":
             print("--------------------")
     finally:
         saveTasks()
+
+
+if __name__ == "__main__":
+    main()
