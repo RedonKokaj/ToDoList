@@ -53,7 +53,6 @@ if __name__ == "__main__":
             print("4. Exit")
             choice = int(input())
             print("--------------------")
-            # os.system("clear")
             if choice == 1:
                 addTask()
             elif choice == 2:
@@ -65,6 +64,5 @@ if __name__ == "__main__":
             else:
                 print("Invalid choice. Please try again.")
             print("--------------------")
-            # os.system("clear")
     finally:
         saveTasks()
