@@ -172,3 +172,9 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Ignore encrypted task file
+tasks.json
+
+# Ignore any key files (if you later decide to store the key manually)
+secret.key

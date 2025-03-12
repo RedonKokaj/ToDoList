@@ -1,72 +1,111 @@
 import os
 import json
+import keyring
+from cryptography.fernet import Fernet
 
-task_list = []
-file_path = os.path.join(os.path.dirname(__file__), "tasks.json")
-
-
-def loadTasks():
-    if os.path.exists(file_path):
-        with open(file_path, "r") as file:
-            global task_list
-            task_list = json.load(file)
+# Constants
+SERVICE_NAME = "ToDoApp"  # Name for OS key storage
+TASK_FILE = os.path.join(os.path.dirname(__file__), "tasks.json")
 
 
-def saveTasks():
-    with open(file_path, "w") as file:
-        json.dump(task_list, file)
+# Load or generate encryption key
+def get_encryption_key():
+    key = keyring.get_password(SERVICE_NAME, "encryption_key")
+    if key is None:
+        key = Fernet.generate_key().decode()  # Generate new key
+        keyring.set_password(SERVICE_NAME, "encryption_key", key)
+        # print("🔑 New encryption key generated and stored securely!")
+    return key.encode()
 
 
-def addTask():
+# Encrypt and decrypt functions
+def encrypt_data(data, key):
+    return Fernet(key).encrypt(json.dumps(data).encode())
+
+
+def decrypt_data(encrypted_data, key):
+    try:
+        return json.loads(Fernet(key).decrypt(encrypted_data).decode())
+    except:
+        print("❌ Error: Unable to decrypt data. Is the correct key stored?")
+        return []
+
+
+# Save encrypted tasks
+def save_tasks():
+    key = get_encryption_key()
+    encrypted_data = encrypt_data(task_list, key)
+    with open(TASK_FILE, "wb") as file:
+        file.write(encrypted_data)
+
+
+# Load and decrypt tasks
+def load_tasks():
+    global task_list
+    if os.path.exists(TASK_FILE):
+        key = get_encryption_key()
+        with open(TASK_FILE, "rb") as file:
+            encrypted_data = file.read()
+        task_list = decrypt_data(encrypted_data, key)
+
+
+# Task operations
+def add_task():
     task = input("Enter the task: ")
     task_list.append(task)
 
 
-def deleteTask():
+def delete_task():
     if not task_list:
-        print("There are no tasks")
+        print("❌ No tasks available!")
         return
-    viewTask()
-    index = int(input("Enter the index of the task to remove: "))
-    if 0 <= index < len(task_list):
-        task_list.pop(index)
-    else:
-        print("Invalid index")
+    view_tasks()
+    try:
+        index = int(input("Enter the index of the task to remove: "))
+        if 0 <= index < len(task_list):
+            task_list.pop(index)
+        else:
+            print("❌ Invalid index")
+    except ValueError:
+        print("❌ Please enter a valid number")
 
 
-def viewTask():
+def view_tasks():
     if not task_list:
-        print("There are no tasks")
+        print("📭 No tasks available!")
         return
     for index, task in enumerate(task_list):
         print(f"{index}. {task}")
 
 
+# Main program loop
 def main():
-    loadTasks()
+    load_tasks()
     try:
         while True:
-            print("Select an option:")
-            print("1. Add task")
-            print("2. View tasks")
-            print("3. Delete task")
-            print("4. Exit")
-            choice = int(input())
+            print("\n📌 To-Do List Menu:")
+            print("1. ➕ Add task")
+            print("2. 📜 View tasks")
+            print("3. ❌ Delete task")
+            print("4. 🚪 Exit")
+            choice = input("Enter your choice: ")
             print("--------------------")
-            if choice == 1:
-                addTask()
-            elif choice == 2:
-                viewTask()
-            elif choice == 3:
-                deleteTask()
-            elif choice == 4:
+
+            if choice == "1":
+                add_task()
+            elif choice == "2":
+                view_tasks()
+            elif choice == "3":
+                delete_task()
+            elif choice == "4":
                 break
             else:
-                print("Invalid choice. Please try again.")
+                print("❌ Invalid choice. Please try again.")
             print("--------------------")
     finally:
-        saveTasks()
+        save_tasks()
 
 
 if __name__ == "__main__":
+    task_list = []
     main()
